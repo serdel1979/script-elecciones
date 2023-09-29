@@ -33,3 +33,4 @@ C:\Users\sergio\Desktop\dotnet\script\obj\Debug\net6.0\refint\script.dll
 C:\Users\sergio\Desktop\dotnet\script\obj\Debug\net6.0\script.pdb
 C:\Users\sergio\Desktop\dotnet\script\obj\Debug\net6.0\script.genruntimeconfig.cache
 C:\Users\sergio\Desktop\dotnet\script\obj\Debug\net6.0\ref\script.dll
+C:\Users\sergio\Desktop\dotnet\script\bin\Debug\net6.0\Newtonsoft.Json.dll

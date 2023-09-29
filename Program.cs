@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using Newtonsoft.Json.Linq;
 using OfficeOpenXml;
 
 class Program
 {
     static async Task Main()
     {
-       // System.AppDomain.CurrentDomain.SetData("EPPlusLicenseContext", LicenseContext.NonCommercial);
+        // System.AppDomain.CurrentDomain.SetData("EPPlusLicenseContext", LicenseContext.NonCommercial);
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 
@@ -31,25 +33,14 @@ class Program
             // Definir la URL base de la API o servicio que proporciona los datos
             string baseUrl = "https://resultados.mininterior.gob.ar/api"; // Reemplaza con la URL correcta
 
-            // Crear un archivo Excel
+
+            int rowIndex = 2; // Empezar desde la segunda fila
+            List<string> mesaIds = new List<string> { "1244" }; // Reemplaza con tus mesaIds
+
             using (var package = new ExcelPackage())
             {
+                // Agregar una hoja de trabajo al archivo
                 var worksheet = package.Workbook.Worksheets.Add("Resultados");
-
-                // Encabezados de las columnas
-                worksheet.Cells[1, 1].Value = "IdMesa";
-                worksheet.Cells[1, 2].Value = "NombreAgrupacion";
-                worksheet.Cells[1, 3].Value = "VotosNulos";
-                worksheet.Cells[1, 4].Value = "VotosNulosPorcentaje";
-                worksheet.Cells[1, 5].Value = "VotosEnBlanco";
-                worksheet.Cells[1, 6].Value = "VotosEnBlancoPorcentaje";
-                worksheet.Cells[1, 7].Value = "VotosRecurridosComandoImpugnados";
-                worksheet.Cells[1, 8].Value = "VotosRecurridosComandoImpugnadosPorcentaje";
-                worksheet.Cells[1, 9].Value = "Total";
-
-                // Hacer solicitudes para obtener datos y llenar el archivo Excel
-                int rowIndex = 2; // Empezar desde la segunda fila
-                List<string> mesaIds = new List<string> { "1244" }; // Reemplaza con tus mesaIds
 
                 foreach (var mesaId in mesaIds)
                 {
@@ -58,27 +49,71 @@ class Program
 
                     string apiPrueba = "https://resultados.mininterior.gob.ar/api/resultados/getResultados?anioEleccion=2019&tipoRecuento=1&tipoEleccion=2&categoriaId=2&distritoId=1&seccionProvincialId=0&seccionId=3&circuitoId=000039&mesaId=1244";
                     // Hacer la solicitud GET
+
                     HttpResponseMessage response = await httpClient.GetAsync(apiPrueba);
 
-                    if (response.IsSuccessStatusCode)
+                    string jsonResult = await response.Content.ReadAsStringAsync();
+
+                    // Analizar el JSON en un objeto JObject
+                    JObject jsonObject = JObject.Parse(jsonResult);
+
+
+
+                    // Establecer valores fijos para Circuito y Mesa (puedes cambiarlos según tus necesidades)
+                    worksheet.Cells[1, 1].Value = "Mesa";
+                    worksheet.Cells[1, 2].Value = "Circuito";
+                    worksheet.Cells[2, 1].Value = "1244";
+                    worksheet.Cells[2, 2].Value = "00039";
+
+                    // Obtener la cantidad de votantes de estadoRecuento
+                    worksheet.Cells[1, 3].Value = "Cantidad de Votantes";
+                    int cantidadVotantes = (int)jsonObject["estadoRecuento"]["cantidadVotantes"];
+                    worksheet.Cells[2, 3].Value = cantidadVotantes;
+
+                    // Obtener los valores de VOTOS NULOS, VOTOS RECURRIDOS, VOTOS IMPUGNADOS, VOTOS DEL COMANDO ELECTORAL y VOTOS EN BLANCO
+                   
+
+                    // Obtener los valores de votos y nombres de agrupaciones de valoresTotalizadosPositivos
+                    var valoresTotalizadosPositivos = jsonObject["valoresTotalizadosPositivos"];
+                    int columnNumber = 4; // Comenzar desde la columna 8 para los votos de las agrupaciones
+                    foreach (var agrupacion in valoresTotalizadosPositivos)
                     {
-                        // Leer la respuesta JSON
-                        string jsonResult = await response.Content.ReadAsStringAsync();
-
-
-                        worksheet.Cells[rowIndex, 1].Value = mesaId;
-                        Console.WriteLine(jsonResult);
-
-                        rowIndex++;
+                        string nombreAgrupacion = (string)agrupacion["nombreAgrupacion"];
+                        int votos = (int)agrupacion["votos"];
+                        worksheet.Cells[1, columnNumber].Value = nombreAgrupacion;
+                        worksheet.Cells[2, columnNumber].Value = votos;
+                        columnNumber++;
                     }
-                }
 
+                    var valoresTotalizadosOtros = jsonObject["valoresTotalizadosOtros"];
+                    worksheet.Cells[1, columnNumber].Value = "Votos Nulos";
+                    worksheet.Cells[2, columnNumber].Value = (int)valoresTotalizadosOtros["votosNulos"];
+                    columnNumber++;
+                    worksheet.Cells[1, columnNumber].Value = "Votos Recurridos";
+                    worksheet.Cells[2, columnNumber].Value = (int)valoresTotalizadosOtros["votosRecurridosComandoImpugnados"];
+                    columnNumber++;
+                    worksheet.Cells[1, columnNumber].Value = "Votos impugnados";
+                    worksheet.Cells[2, columnNumber].Value = (int)valoresTotalizadosOtros["votosRecurridosComandoImpugnadosPorcentaje"];
+                    columnNumber++;
+                    worksheet.Cells[1, columnNumber].Value = "Votos en blanco";
+                    worksheet.Cells[2, columnNumber].Value = (int)valoresTotalizadosOtros["votosEnBlanco"];
+
+
+                }
                 // Guardar el archivo Excel en disco
                 FileInfo excelFile = new FileInfo("Resultados.xlsx");
                 package.SaveAs(excelFile);
+            
 
-                Console.WriteLine("Archivo Excel generado con éxito: Resultados.xlsx");
             }
+
+
         }
+
+        Console.WriteLine("Archivo Excel generado con éxito: Resultados.xlsx");
+
     }
+
+    
 }
+
