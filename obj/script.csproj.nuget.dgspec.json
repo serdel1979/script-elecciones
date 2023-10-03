@@ -1,24 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\sergio\\Desktop\\dotnet\\script\\script.csproj": {}
+    "C:\\Users\\sergio\\Desktop\\script-elecciones\\script.csproj": {}
   },
   "projects": {
-    "C:\\Users\\sergio\\Desktop\\dotnet\\script\\script.csproj": {
+    "C:\\Users\\sergio\\Desktop\\script-elecciones\\script.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\sergio\\Desktop\\dotnet\\script\\script.csproj",
+        "projectUniqueName": "C:\\Users\\sergio\\Desktop\\script-elecciones\\script.csproj",
         "projectName": "script",
-        "projectPath": "C:\\Users\\sergio\\Desktop\\dotnet\\script\\script.csproj",
+        "projectPath": "C:\\Users\\sergio\\Desktop\\script-elecciones\\script.csproj",
         "packagesPath": "C:\\Users\\sergio\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\sergio\\Desktop\\dotnet\\script\\obj\\",
+        "outputPath": "C:\\Users\\sergio\\Desktop\\script-elecciones\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
           "C:\\Users\\sergio\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -26,7 +22,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -70,7 +65,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.306\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     }

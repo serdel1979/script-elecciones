@@ -47,7 +47,7 @@ class Program
                     // Construir la URL de la solicitud
                     string apiUrl = $"{baseUrl}?tipoEleccion={tipoEleccion}&distritoId={distritoId}&seccionProvincialId={seccionProvincialId}&seccionId={seccionId}&mesaId={mesaId}";
 
-                    string apiPrueba = "https://resultados.mininterior.gob.ar/api/resultados/getResultados?anioEleccion=2019&tipoRecuento=1&tipoEleccion=2&categoriaId=2&distritoId=1&seccionProvincialId=0&seccionId=3&circuitoId=000039&mesaId=1244";
+                    string apiPrueba = "https://resultados.mininterior.gob.ar/api/resultados/getResultados?anioEleccion=2019&tipoRecuento=1&tipoEleccion=2&categoriaId=2&distritoId=1&seccionProvincialId=0&seccionId=3&circuitoId=000039&mesaId=1244&categoriaId=10";
                     // Hacer la solicitud GET
 
                     HttpResponseMessage response = await httpClient.GetAsync(apiPrueba);
@@ -75,15 +75,53 @@ class Program
 
                     // Obtener los valores de votos y nombres de agrupaciones de valoresTotalizadosPositivos
                     var valoresTotalizadosPositivos = jsonObject["valoresTotalizadosPositivos"];
-                    int columnNumber = 4; // Comenzar desde la columna 8 para los votos de las agrupaciones
-                    foreach (var agrupacion in valoresTotalizadosPositivos)
+
+
+
+                    var valoresTotalizadosPositivosSorted = valoresTotalizadosPositivos
+                            .OrderBy(agrupacion => (string)agrupacion["nombreAgrupacion"])
+                            .ToList();
+
+
+
+                    int columnNumber = 4;
+
+                    var valoresAgrupaciones = new Dictionary<string, int>();
+
+
+                    foreach (var agrupacion in valoresTotalizadosPositivosSorted)
                     {
                         string nombreAgrupacion = (string)agrupacion["nombreAgrupacion"];
                         int votos = (int)agrupacion["votos"];
+
+                        // Agregar el valor al diccionario
+                        valoresAgrupaciones[nombreAgrupacion] = votos;
+
+                        // Agregar el encabezado al archivo Excel
                         worksheet.Cells[1, columnNumber].Value = nombreAgrupacion;
                         worksheet.Cells[2, columnNumber].Value = votos;
                         columnNumber++;
                     }
+
+
+                    foreach (var agrupacionNombre in valoresAgrupaciones.Keys)
+                    {
+                        worksheet.Cells[1, columnNumber].Value = agrupacionNombre;
+
+                        // Obtener el valor del diccionario o establecerlo en 0 si falta
+                        if (valoresAgrupaciones.TryGetValue(agrupacionNombre, out int votos))
+                        {
+                            worksheet.Cells[2, columnNumber].Value = votos;
+                        }
+                        else
+                        {
+                            worksheet.Cells[2, columnNumber].Value = 0;
+                        }
+
+                        columnNumber++;
+                    }
+
+
 
                     var valoresTotalizadosOtros = jsonObject["valoresTotalizadosOtros"];
                     worksheet.Cells[1, columnNumber].Value = "Votos Nulos";
