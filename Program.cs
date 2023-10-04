@@ -14,155 +14,165 @@ class Program
        
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+        var filePath = "ResultadosEleccion.xlsx";
 
-        Console.Write("Tipo de Elección: ");
-        string tipoEleccion = Console.ReadLine();
+        // Lista de cargos
+        var cargos = new Dictionary<string, string>
+            {
+                { "PRESIDENTE", "1" },
+                { "PARLAMENTARIO MERCOSUR NACIONAL", "2" },
+                { "SENADOR NACIONAL", "3" },
+                { "DIPUTADO NACIONAL", "4" },
+                { "PARLAMENTARIO MERCOSUR PROVINCIAL", "5" },
+                { "GOBERNADOR", "6" },
+                { "SENADOR PROVINCIAL", "7" },
+                { "DIPUTADO PROVINCIAL", "8" },
+                { "INTENDENTE", "9" },
+                { "CONCEJAL", "10" }
+            };
 
-        Console.Write("Distrito Id: ");
-        string distritoId = Console.ReadLine();
 
-        Console.Write("Sección Provincial Id: ");
-        string seccionProvincialId = Console.ReadLine();
-
-        Console.Write("Sección Id: ");
-        string seccionId = Console.ReadLine();
-
-        using (var httpClient = new HttpClient())
+        using (var package = new ExcelPackage(new FileInfo(filePath)))
         {
 
-            List<string> nombresCargos = new List<string>
-                {
-                    "PRESIDENTE",
-                    "PARLAMENTARIO MERCOSUR NACIONAL",
-                    "SENADOR NACIONAL",
-                    "DIPUTADO NACIONAL",
-                    "PARLAMENTARIO MERCOSUR PROVINCIAL",
-                    "GOBERNADOR",
-                    "SENADOR PROVINCIAL",
-                    "DIPUTADO PROVINCIAL",
-                    "INTENDENTE",
-                    "CONCEJAL"
-                };
+            var worksheet = package.Workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == "ResultadosEleccion");
 
-
-
-            int rowIndex = 2; 
-            List<string> mesaIds = new List<string> { "1244" }; 
-
-            using (var package = new ExcelPackage())
+            if (worksheet != null)
             {
-                var worksheet = package.Workbook.Worksheets.Add("Resultados");
-
-                //foreach (var mesaId in mesaIds)
-                // {
-
-                var row = 1;
-
-                for (int categoriaIndex = 0; categoriaIndex < nombresCargos.Count; categoriaIndex++)
-                {
-                    int categoriaId = categoriaIndex + 1;
-                    string nombreCargo = nombresCargos[categoriaIndex];
-
-                    string apiPrueba = $"https://resultados.mininterior.gob.ar/api/resultados/getResultados?anioEleccion=2019&tipoRecuento=1&tipoEleccion=2&distritoId=1&seccionProvincialId=0&seccionId=3&circuitoId=000039&mesaId=1244&categoriaId={categoriaId}";
-
-
-                    HttpResponseMessage response = await httpClient.GetAsync(apiPrueba);
-
-                    string jsonResult = await response.Content.ReadAsStringAsync();
-
-
-                    JObject jsonObject = JObject.Parse(jsonResult);
-
-
-                    worksheet.Cells[row, 1].Value = "Circuito";
-                    worksheet.Cells[row, 2].Value = "Mesa";
-                    worksheet.Cells[row + 1, 1].Value = "00039";
-                    worksheet.Cells[row + 1, 2].Value = "1244";
-
-                    // Obtener la cantidad de votantes de estadoRecuento
-                    worksheet.Cells[row, 3].Value = "Cantidad de Votantes";
-                    int cantidadVotantes = (int)jsonObject["estadoRecuento"]["cantidadVotantes"];
-                    worksheet.Cells[row + 1, 3].Value = cantidadVotantes;
-
-                    var valoresTotalizadosPositivos = jsonObject["valoresTotalizadosPositivos"];
-
-
-
-                    var valoresTotalizadosPositivosSorted = valoresTotalizadosPositivos
-                            .OrderBy(agrupacion => (string)agrupacion["nombreAgrupacion"])
-                            .ToList();
-
-
-
-                    int columnNumber = 4;
-
-                    var valoresAgrupaciones = new Dictionary<string, int>();
-
-
-                    foreach (var agrupacion in valoresTotalizadosPositivosSorted)
-                    {
-                        string nombreAgrupacion = (string)agrupacion["nombreAgrupacion"];
-                        int votos = (int)agrupacion["votos"];
-
-                        // Agregar el valor al diccionario
-                        valoresAgrupaciones[nombreAgrupacion] = votos;
-
-                        // Agregar el encabezado al archivo Excel
-                        worksheet.Cells[row, columnNumber].Value = nombreAgrupacion;
-                        worksheet.Cells[row + 1, columnNumber].Value = votos;
-                        columnNumber++;
-                    }
-
-
-                    foreach (var agrupacionNombre in valoresAgrupaciones.Keys)
-                    {
-                        worksheet.Cells[row, columnNumber].Value = agrupacionNombre;
-
-                        // Obtener el valor del diccionario o establecerlo en 0 si falta
-                        if (valoresAgrupaciones.TryGetValue(agrupacionNombre, out int votos))
-                        {
-                            worksheet.Cells[row + 1, columnNumber].Value = votos;
-                        }
-                        else
-                        {
-                            worksheet.Cells[row + 1, columnNumber].Value = 0;
-                        }
-
-                        columnNumber++;
-                    }
-
-
-
-                    var valoresTotalizadosOtros = jsonObject["valoresTotalizadosOtros"];
-                    worksheet.Cells[row, columnNumber].Value = "Votos Nulos";
-                    worksheet.Cells[row + 1, columnNumber].Value = ((int?)valoresTotalizadosOtros["votosNulos"]) ?? 0;
-                    columnNumber++;
-                    worksheet.Cells[row, columnNumber].Value = "Votos Recurridos";
-                    worksheet.Cells[row + 1, columnNumber].Value = ((int?)valoresTotalizadosOtros["votosRecurridosComandoImpugnados"]) ?? 0;
-                    columnNumber++;
-                    worksheet.Cells[row, columnNumber].Value = "Votos impugnados";
-                    worksheet.Cells[row + 1, columnNumber].Value = ((int?)valoresTotalizadosOtros["votosRecurridosComandoImpugnadosPorcentaje"]) ?? 0;
-                    columnNumber++;
-                    worksheet.Cells[row, columnNumber].Value = "Votos en blanco";
-                    worksheet.Cells[row + 1, columnNumber].Value = ((int?)valoresTotalizadosOtros["votosEnBlanco"]) ?? 0;
-
-                }
-
-                //}
-                // Guardar el archivo Excel en disco
-                FileInfo excelFile = new FileInfo("Resultados.xlsx");
-                package.SaveAs(excelFile);
-            
-
+                package.Workbook.Worksheets.Delete(worksheet);
             }
 
+            // Crear una hoja en el archivo Excel
+            worksheet = package.Workbook.Worksheets.Add("ResultadosEleccion");
 
+            // Agregar encabezados de columna
+            var columnHeaders = new List<string>
+                {
+                    "Circuito",
+                    "Mesa",
+                    "Cargo",
+                    "Cantidad de Votantes",
+                    "UNITE POR LA LIBERTAD Y LA DIGNIDAD",
+                    "JUNTOS POR EL CAMBIO",
+                    "FRENTE NOS",
+                    "FRENTE DE IZQUIERDA Y DE TRABAJADORES - UNIDAD",
+                    "FRENTE DE TODOS",
+                    "CONSENSO FEDERAL",
+                    "Votos Nulos",
+                    "Votos Impugnados",
+                    "Votos en Blanco"
+                };
+
+            for (int i = 0; i < columnHeaders.Count; i++)
+            {
+                worksheet.Cells[1, i + 1].Value = columnHeaders[i];
+            }
+
+            // Llenar las filas con datos
+            int rowIndex = 2; // Comenzar en la segunda fila
+
+            foreach (var cargo in cargos)
+            {
+                var categoriaId = cargo.Value;
+                var response = await ObtenerResultadoEleccionAsync(categoriaId);
+
+                if (response != null && response.valoresTotalizadosPositivos.Count > 0)
+                {
+                    worksheet.Cells[rowIndex, 1].Value = "000039";
+                    worksheet.Cells[rowIndex, 2].Value = "1244"; // Cantidad de Votantes
+                    worksheet.Cells[rowIndex, 3].Value = cargo.Key; // Cargo
+                    worksheet.Cells[rowIndex, 4].Value = response.estadoRecuento?.cantidadVotantes ?? 0; // Cantidad de Votantes
+
+                    // Llenar otras columnas de votos según la respuesta JSON
+                    // Ejemplo:
+                    worksheet.Cells[rowIndex, 5].Value = ObtenerVotosAgrupacion(response, "UNITE POR LA LIBERTAD Y LA DIGNIDAD");
+                    worksheet.Cells[rowIndex, 6].Value = ObtenerVotosAgrupacion(response, "JUNTOS POR EL CAMBIO");
+                    worksheet.Cells[rowIndex, 7].Value = ObtenerVotosAgrupacion(response, "FRENTE NOS");
+                    worksheet.Cells[rowIndex, 8].Value = ObtenerVotosAgrupacion(response, "FRENTE DE IZQUIERDA Y DE TRABAJADORES - UNIDAD");
+                    worksheet.Cells[rowIndex, 9].Value = ObtenerVotosAgrupacion(response, "FRENTE DE TODOS");
+                    worksheet.Cells[rowIndex, 10].Value = ObtenerVotosAgrupacion(response, "CONSENSO FEDERAL");
+
+
+                    worksheet.Cells[rowIndex, 11].Value = response.valoresTotalizadosOtros?.votosNulos ?? 0; // Votos Nulos
+                    worksheet.Cells[rowIndex, 12].Value = response.valoresTotalizadosOtros?.votosRecurridosComandoImpugnados ?? 0; // Votos Impugnados
+                    worksheet.Cells[rowIndex, 13].Value = response.valoresTotalizadosOtros?.votosEnBlanco ?? 0; // Votos en Blanco
+
+                    rowIndex++;
+                }
+            }
+
+            // Guardar el archivo Excel
+            package.Save();
         }
 
-        Console.WriteLine("Archivo Excel generado con éxito: Resultados.xlsx");
+        Console.WriteLine($"Archivo Excel generado en: {filePath}");
+
 
     }
 
-    
+
+
+    static async Task<RespuestaEleccion> ObtenerResultadoEleccionAsync(string categoriaId)
+    {
+        using (var httpClient = new HttpClient())
+        {
+            var url = $"https://resultados.mininterior.gob.ar/api/resultados/getResultados?anioEleccion=2019&tipoRecuento=1&tipoEleccion=2&distritoId=1&seccionProvincialId=0&seccionId=3&circuitoId=000039&mesaId=1244&categoriaId={categoriaId}";
+
+            var response = await httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var resultado = Newtonsoft.Json.JsonConvert.DeserializeObject<RespuestaEleccion>(jsonResponse);
+                return resultado;
+            }
+        }
+
+        return null;
+    }
+
+    static int ObtenerVotosAgrupacion(RespuestaEleccion respuesta, string nombreAgrupacion)
+    {
+        foreach (var agrupacion in respuesta.valoresTotalizadosPositivos)
+        {
+            if (agrupacion.nombreAgrupacion == nombreAgrupacion)
+            {
+                return agrupacion.votos;
+            }
+        }
+
+        return 0;
+    }
+
+    public class RespuestaEleccion
+    {
+        public DateTime fechaTotalizacion { get; set; }
+        public EstadoRecuento estadoRecuento { get; set; }
+        public List<ValoresTotalizadosPositivos> valoresTotalizadosPositivos { get; set; }
+        public ValoresTotalizadosOtros valoresTotalizadosOtros { get; set; }
+    }
+
+    public class EstadoRecuento
+    {
+        public int cantidadVotantes { get; set; }
+    }
+
+    public class ValoresTotalizadosPositivos
+    {
+        public string nombreAgrupacion { get; set; }
+        public int votos { get; set; }
+    }
+
+    public class ValoresTotalizadosOtros
+    {
+        public int votosNulos { get; set; }
+        public double? votosNulosPorcentaje { get; set; }
+        public int votosEnBlanco { get; set; }
+        public double? votosEnBlancoPorcentaje { get; set; }
+        public int votosRecurridosComandoImpugnados { get; set; }
+        public double? votosRecurridosComandoImpugnadosPorcentaje { get; set; }
+    }
+
+
 }
 
